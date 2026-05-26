@@ -1,0 +1,11 @@
+export default function Home() {
+  return (
+    <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
+      <h1>DealsinKampala Bot</h1>
+      <p>Telegram webhook server is running.</p>
+      <p>
+        <a href="https://t.me/DealsinKampalaBot">Open bot on Telegram</a>
+      </p>
+    </main>
+  );
+}
