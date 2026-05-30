@@ -102,22 +102,70 @@ export default async function DealDetailPage({ params }: PageProps) {
       >
         {/* Left: Image + Description */}
         <div>
-          {/* Image placeholder */}
-          <div
-            style={{
-              backgroundColor: `${color}18`,
-              borderRadius: 12,
-              height: 320,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "6rem",
-              marginBottom: "1.5rem",
-              border: "1px solid var(--color-border)",
-            }}
-          >
-            {emoji}
-          </div>
+          {/* Photo or emoji placeholder */}
+          {deal.photos && deal.photos.length > 0 ? (
+            <div style={{ marginBottom: "1.5rem" }}>
+              {/* Primary photo */}
+              <div
+                style={{
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  border: "1px solid var(--color-border)",
+                  marginBottom: deal.photos.length > 1 ? "0.75rem" : 0,
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={deal.photos[0]}
+                  alt={deal.title}
+                  style={{
+                    width: "100%",
+                    height: 320,
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                  onError={undefined}
+                />
+              </div>
+              {/* Thumbnail strip for additional photos */}
+              {deal.photos.length > 1 && (
+                <div style={{ display: "flex", gap: "0.5rem", overflow: "hidden" }}>
+                  {deal.photos.slice(1, 5).map((url, i) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={i}
+                      src={url}
+                      alt={`${deal.title} ${i + 2}`}
+                      style={{
+                        width: 80,
+                        height: 80,
+                        objectFit: "cover",
+                        borderRadius: 8,
+                        border: "1px solid var(--color-border)",
+                        flexShrink: 0,
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div
+              style={{
+                backgroundColor: `${color}18`,
+                borderRadius: 12,
+                height: 320,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "6rem",
+                marginBottom: "1.5rem",
+                border: "1px solid var(--color-border)",
+              }}
+            >
+              {emoji}
+            </div>
+          )}
 
           {/* Badges */}
           <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
@@ -347,7 +395,7 @@ export default async function DealDetailPage({ params }: PageProps) {
               confirm the item is as described.
             </p>
             <Link
-              href="/agents"
+              href={`/deals/${deal.id}/request-escrow`}
               style={{
                 display: "block",
                 backgroundColor: "var(--color-green-primary)",
@@ -358,9 +406,27 @@ export default async function DealDetailPage({ params }: PageProps) {
                 fontWeight: 700,
                 fontSize: "0.8rem",
                 textAlign: "center",
+                marginBottom: "0.5rem",
               }}
             >
-              Find a Verified Agent →
+              🛡️ Request Escrow Agent →
+            </Link>
+            <Link
+              href="/agents"
+              style={{
+                display: "block",
+                backgroundColor: "var(--color-surface)",
+                color: "var(--color-muted)",
+                padding: "0.5rem 1rem",
+                borderRadius: 8,
+                textDecoration: "none",
+                fontWeight: 600,
+                fontSize: "0.8rem",
+                textAlign: "center",
+                border: "1px solid var(--color-border)",
+              }}
+            >
+              Browse all agents
             </Link>
           </div>
 

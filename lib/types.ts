@@ -8,7 +8,7 @@ export type DealCategory =
   | "services"
   | "other";
 
-export type DealStatus = "active" | "sold" | "pending" | "expired";
+export type DealStatus = "active" | "sold" | "pending" | "expired" | "rejected";
 
 export interface Deal {
   id: string;

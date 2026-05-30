@@ -59,6 +59,16 @@ export async function submitDeal(formData: FormData) {
       ? telegram
       : sellerName!.toLowerCase().replace(/[^a-z0-9_]/g, "_").slice(0, 32);
 
+  // Photo URLs — comma-separated list from the optional photo URL field
+  const photoInput = formData.get("photoUrls")?.toString().trim() || null;
+  const photos = photoInput
+    ? photoInput
+        .split(",")
+        .map((u) => u.trim())
+        .filter((u) => u.startsWith("http"))
+        .join(",") || null
+    : null;
+
   try {
     await db.insert(deals).values({
       id: `deal-${Date.now()}`,
@@ -73,6 +83,7 @@ export async function submitDeal(formData: FormData) {
       status: "pending", // listing goes live after manual review
       featured: false,
       sellerVerified: false,
+      photos,
     });
   } catch (err) {
     console.error("[submit-deal] DB insert failed:", err);

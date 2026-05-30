@@ -15,6 +15,7 @@ export const dealStatusEnum = pgEnum("deal_status", [
   "pending",
   "sold",
   "expired",
+  "rejected",
 ]);
 
 export const dealCategoryEnum = pgEnum("deal_category", [
@@ -30,32 +31,34 @@ export const dealCategoryEnum = pgEnum("deal_category", [
 
 export const dealTypeEnum = pgEnum("deal_type", ["standard", "high_value"]);
 
+export const escrowStatusEnum = pgEnum("escrow_status", [
+  "requested",
+  "active",
+  "completed",
+  "cancelled",
+]);
+
 // ─── Deals ────────────────────────────────────────────────────────────────────
 
 export const deals = pgTable(
   "deals",
   {
-    id: text("id").primaryKey(), // e.g. "deal-001"
+    id: text("id").primaryKey(),
     title: text("title").notNull(),
     description: text("description").notNull(),
-    price: integer("price").notNull(), // UGX, no decimals
+    price: integer("price").notNull(),
     category: dealCategoryEnum("category").notNull(),
     status: dealStatusEnum("status").notNull().default("active"),
     featured: boolean("featured").notNull().default(false),
 
-    // Seller info
     sellerName: text("seller_name").notNull(),
-    sellerTelegram: text("seller_telegram").notNull(), // without @
+    sellerTelegram: text("seller_telegram").notNull(),
     sellerPhone: text("seller_phone"),
     sellerVerified: boolean("seller_verified").notNull().default(false),
 
-    // Location
-    location: text("location").notNull(), // e.g. "Nakawa, Kampala"
+    location: text("location").notNull(),
+    photos: text("photos"),
 
-    // Photos stored as comma-separated URLs; Phase 1 uses emoji placeholders
-    photos: text("photos"), // nullable — may be empty in Phase 1
-
-    // Timestamps
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
     expiresAt: timestamp("expires_at"),
@@ -72,13 +75,13 @@ export const deals = pgTable(
 export const agents = pgTable(
   "agents",
   {
-    id: text("id").primaryKey(), // e.g. "agent-001"
+    id: text("id").primaryKey(),
     name: text("name").notNull(),
-    telegramHandle: text("telegram_handle").notNull(), // without @
-    phone: text("phone"), // primary contact number (nullable — use mtn/airtel instead)
+    telegramHandle: text("telegram_handle").notNull(),
+    phone: text("phone"),
     altPhone: text("alt_phone"),
-    area: text("area").notNull(), // e.g. "Nakawa"
-    division: text("division").notNull(), // e.g. "Kampala Central"
+    area: text("area").notNull(),
+    division: text("division").notNull(),
     landmark: text("landmark").notNull(),
     verified: boolean("verified").notNull().default(false),
     active: boolean("active").notNull().default(true),
@@ -97,24 +100,21 @@ export const agents = pgTable(
 export const commissionRecords = pgTable(
   "commission_records",
   {
-    id: text("id").primaryKey(), // nanoid generated at insert time
+    id: text("id").primaryKey(),
     dealId: text("deal_id").notNull(),
     dealDescription: text("deal_description").notNull(),
     dealType: dealTypeEnum("deal_type").notNull(),
 
-    // Parties
     agentTelegramId: text("agent_telegram_id").notNull(),
     agentName: text("agent_name").notNull(),
     buyerName: text("buyer_name").notNull(),
     sellerName: text("seller_name").notNull(),
 
-    // Amounts (all UGX)
     amountUgx: integer("amount_ugx").notNull(),
-    agentCommissionUgx: integer("agent_commission_ugx").notNull(), // always 1%
-    africaTeamCommissionUgx: integer("africa_team_commission_ugx").notNull(), // 1% standard, 5% high_value
+    agentCommissionUgx: integer("agent_commission_ugx").notNull(),
+    africaTeamCommissionUgx: integer("africa_team_commission_ugx").notNull(),
     totalCommissionUgx: integer("total_commission_ugx").notNull(),
 
-    // Status
     paid: boolean("paid").notNull().default(false),
     paidAt: timestamp("paid_at"),
 
@@ -127,6 +127,32 @@ export const commissionRecords = pgTable(
   ]
 );
 
+// ─── Escrow Requests ──────────────────────────────────────────────────────────
+
+export const escrowRequests = pgTable(
+  "escrow_requests",
+  {
+    id: text("id").primaryKey(),
+    dealId: text("deal_id").notNull(),
+    dealTitle: text("deal_title").notNull(),
+    buyerName: text("buyer_name").notNull(),
+    buyerPhone: text("buyer_phone").notNull(),
+    buyerTelegram: text("buyer_telegram"),
+    sellerName: text("seller_name").notNull(),
+    sellerTelegram: text("seller_telegram").notNull(),
+    agentTelegramId: text("agent_telegram_id"),
+    status: escrowStatusEnum("status").notNull().default("requested"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    completedAt: timestamp("completed_at"),
+  },
+  (t) => [
+    index("escrow_deal_idx").on(t.dealId),
+    index("escrow_status_idx").on(t.status),
+    index("escrow_agent_idx").on(t.agentTelegramId),
+  ]
+);
+
 // ─── Type exports ─────────────────────────────────────────────────────────────
 
 export type Deal = typeof deals.$inferSelect;
@@ -135,3 +161,5 @@ export type Agent = typeof agents.$inferSelect;
 export type NewAgent = typeof agents.$inferInsert;
 export type CommissionRecord = typeof commissionRecords.$inferSelect;
 export type NewCommissionRecord = typeof commissionRecords.$inferInsert;
+export type EscrowRequest = typeof escrowRequests.$inferSelect;
+export type NewEscrowRequest = typeof escrowRequests.$inferInsert;

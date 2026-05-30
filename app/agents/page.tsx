@@ -60,24 +60,43 @@ export default async function AgentsPage() {
             deal completes — their incentive is always your safety.
           </p>
         </div>
-        <a
-          href="https://t.me/DealsinKampalaBot"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            backgroundColor: "var(--color-orange)",
-            color: "#fff",
-            padding: "0.875rem 1.5rem",
-            borderRadius: 8,
-            textDecoration: "none",
-            fontWeight: 700,
-            fontSize: "0.875rem",
-            whiteSpace: "nowrap",
-            flexShrink: 0,
-          }}
-        >
-          📱 Find Agent via Bot
-        </a>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", flexShrink: 0 }}>
+          <a
+            href="https://t.me/DealsinKampalaBot"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              backgroundColor: "var(--color-orange)",
+              color: "#fff",
+              padding: "0.875rem 1.5rem",
+              borderRadius: 8,
+              textDecoration: "none",
+              fontWeight: 700,
+              fontSize: "0.875rem",
+              whiteSpace: "nowrap",
+              textAlign: "center",
+            }}
+          >
+            📱 Find Agent via Bot
+          </a>
+          <a
+            href="/agents/join"
+            style={{
+              backgroundColor: "rgba(255,255,255,0.15)",
+              color: "#fff",
+              padding: "0.75rem 1.5rem",
+              borderRadius: 8,
+              textDecoration: "none",
+              fontWeight: 700,
+              fontSize: "0.875rem",
+              whiteSpace: "nowrap",
+              textAlign: "center",
+              border: "1px solid rgba(255,255,255,0.3)",
+            }}
+          >
+            🛡️ Become an Agent
+          </a>
+        </div>
       </div>
 
       {/* How escrow works */}

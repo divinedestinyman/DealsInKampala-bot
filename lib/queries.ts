@@ -4,9 +4,10 @@
  */
 
 import { db } from "./db";
-import { deals, agents } from "./schema";
+import { deals, agents, commissionRecords } from "./schema";
 import { eq, ilike, and, or, desc } from "drizzle-orm";
 import type { Deal, Agent } from "./types";
+import type { CommissionRecord } from "./schema";
 
 // ─── Mappers — DB row → API shape ─────────────────────────────────────────────
 // The DB stores seller fields flat (sellerName, sellerTelegram…).
@@ -178,6 +179,41 @@ export async function getDealsByTelegram(handle: string): Promise<Deal[]> {
     .orderBy(desc(deals.createdAt))
     .limit(10);
   return rows.map(toDeal);
+}
+
+// ─── Admin queries ────────────────────────────────────────────────────────────
+
+export async function getPendingDeals(): Promise<Deal[]> {
+  const rows = await db
+    .select()
+    .from(deals)
+    .where(eq(deals.status, "pending"))
+    .orderBy(deals.createdAt);
+  return rows.map(toDeal);
+}
+
+export async function getPendingAgents() {
+  return db
+    .select()
+    .from(agents)
+    .where(and(eq(agents.verified, false), eq(agents.active, true)))
+    .orderBy(agents.joinedAt);
+}
+
+export async function getAllCommissions(limit = 200): Promise<CommissionRecord[]> {
+  return db
+    .select()
+    .from(commissionRecords)
+    .orderBy(desc(commissionRecords.recordedAt))
+    .limit(limit);
+}
+
+export async function getUnpaidCommissions(): Promise<CommissionRecord[]> {
+  return db
+    .select()
+    .from(commissionRecords)
+    .where(eq(commissionRecords.paid, false))
+    .orderBy(commissionRecords.recordedAt);
 }
 
 // ─── MarkdownV2 formatting helpers ────────────────────────────────────────────

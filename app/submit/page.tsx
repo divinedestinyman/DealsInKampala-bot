@@ -259,7 +259,7 @@ export default async function SubmitPage({ searchParams }: PageProps) {
         </FormField>
 
         {/* Phone + Telegram row */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.25rem" }}>
           <div>
             <label style={labelStyle}>Phone number</label>
             <input
@@ -279,6 +279,19 @@ export default async function SubmitPage({ searchParams }: PageProps) {
             />
           </div>
         </div>
+
+        {/* Photo URLs — Phase 8 */}
+        <FormField
+          label="Photo URL(s)"
+          hint="Paste a direct image link (e.g. from Google Drive, Dropbox, Imgur). Separate multiple URLs with commas."
+        >
+          <input
+            type="url"
+            name="photoUrls"
+            placeholder="https://i.imgur.com/example.jpg"
+            style={inputStyle}
+          />
+        </FormField>
 
         {/* Policy note */}
         <p
