@@ -1,44 +1,41 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import Link from "next/link";
+import { joinAsAgent } from "../../actions/join-agent";
 
 export const metadata: Metadata = {
-  title: "Join as Agent",
-  description: "Become a verified escrow agent on DealsInKampala",
+  title: "Become an Escrow Agent — DealsInKampala",
+  description:
+    "Apply to become a verified escrow agent in Kampala. Hold mobile money in trust for P2P deals and earn 1% commission on every completed deal.",
 };
 
-const DIVISIONS = ["Kampala Central", "Kampala North", "Kampala South", "Kampala East", "Kampala West"];
-const AREAS = ["Nakawa", "Ntinda", "Makerere", "Kawempe", "Makindye", "Lubaga", "Mukono", "Wakiso"];
+const DIVISIONS = [
+  "Kampala Central",
+  "Kampala North",
+  "Kampala South",
+  "Kampala East",
+  "Kampala West",
+];
 
-async function submitAgent(formData: FormData) {
-  "use server";
-  const name = formData.get("name")?.toString().trim();
-  const phone = formData.get("phone")?.toString().trim() || null;
-  const altPhone = formData.get("altPhone")?.toString().trim() || null;
-  const area = formData.get("area")?.toString().trim();
-  const division = formData.get("division")?.toString().trim();
-  const landmark = formData.get("landmark")?.toString().trim();
-  const telegramHandle = formData.get("telegramHandle")?.toString().trim();
+const AREAS = [
+  "Nakawa",
+  "Ntinda",
+  "Makerere",
+  "Kawempe",
+  "Makindye",
+  "Lubaga",
+  "Mukono",
+  "Wakiso",
+  "Kololo",
+  "Entebbe",
+];
 
-  if (!name || !area || !division || !landmark || !telegramHandle) {
-    redirect("/agents/join?error=missing_fields");
-  }
-
-  try {
-    const res = await fetch("https://dealsinkampala.vercel.app/api/agents", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone, altPhone, area, division, landmark, telegramHandle }),
-    });
-
-    if (res.ok) {
-      redirect("/agents/join?success=true");
-    } else {
-      redirect("/agents/join?error=failed");
-    }
-  } catch {
-    redirect("/agents/join?error=network");
-  }
-}
+const ERROR_MESSAGES: Record<string, string> = {
+  missing_fields:
+    "Please fill in all required fields (name, Telegram, area, division, landmark).",
+  no_mobile_money:
+    "At least one mobile money number (MTN or Airtel) is required.",
+  server_error: "Something went wrong. Please try again.",
+};
 
 interface PageProps {
   searchParams: Promise<{ success?: string; error?: string }>;
@@ -47,75 +44,390 @@ interface PageProps {
 export default async function AgentJoinPage({ searchParams }: PageProps) {
   const { success, error } = await searchParams;
 
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    padding: "0.625rem 0.875rem",
+    border: "1px solid var(--color-border)",
+    borderRadius: 8,
+    fontSize: "0.9rem",
+    backgroundColor: "#fff",
+    color: "var(--color-text)",
+    boxSizing: "border-box",
+    fontFamily: "inherit",
+  };
+
+  const labelStyle: React.CSSProperties = {
+    display: "block",
+    fontSize: "0.825rem",
+    fontWeight: 600,
+    color: "var(--color-text)",
+    marginBottom: "0.375rem",
+  };
+
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "2rem 1.25rem" }}>
+      {/* Header */}
       <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "2rem", fontWeight: 800 }}>Join as Escrow Agent</h1>
-        <p style={{ color: "var(--color-muted)" }}>Earn 1% commission on every successful deal.</p>
+        <div
+          style={{
+            display: "inline-block",
+            backgroundColor: "#D1FAE5",
+            color: "#065F46",
+            padding: "0.3rem 0.875rem",
+            borderRadius: 20,
+            fontSize: "0.75rem",
+            fontWeight: 700,
+            marginBottom: "1rem",
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+          }}
+        >
+          🛡️ JOIN THE NETWORK
+        </div>
+        <h1
+          style={{
+            fontSize: "2rem",
+            fontWeight: 800,
+            letterSpacing: "-0.02em",
+            marginBottom: "0.625rem",
+          }}
+        >
+          Become an Escrow Agent
+        </h1>
+        <p
+          style={{
+            color: "var(--color-muted)",
+            fontSize: "0.95rem",
+            lineHeight: 1.65,
+            maxWidth: 500,
+            margin: "0 auto",
+          }}
+        >
+          Earn 1% commission on every completed deal in your area. No upfront
+          cost — just a mobile money account and your reputation.
+        </p>
       </div>
 
-      {success && (
-        <div style={{ backgroundColor: "#D1FAE5", border: "1px solid #10B981", borderRadius: 8, padding: "1rem", marginBottom: "1.5rem", color: "#065F46" }}>
-          Application submitted! We'll verify you within 24 hours.
+      {/* Stats */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: "1rem",
+          marginBottom: "2rem",
+        }}
+      >
+        {[
+          { icon: "💰", label: "Commission", value: "1% per deal" },
+          { icon: "🆓", label: "Cost to join", value: "Free" },
+          { icon: "⏱️", label: "Review time", value: "24–72 hours" },
+        ].map((s) => (
+          <div
+            key={s.label}
+            style={{
+              backgroundColor: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
+              borderRadius: 10,
+              padding: "1rem",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontSize: "1.5rem", marginBottom: "0.375rem" }}>
+              {s.icon}
+            </div>
+            <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>{s.value}</div>
+            <div
+              style={{
+                fontSize: "0.75rem",
+                color: "var(--color-muted)",
+                marginTop: "0.2rem",
+              }}
+            >
+              {s.label}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Success banner */}
+      {success === "true" && (
+        <div
+          style={{
+            backgroundColor: "#D1FAE5",
+            border: "1px solid #6EE7B7",
+            borderRadius: 12,
+            padding: "1.25rem 1.5rem",
+            marginBottom: "1.5rem",
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "0.875rem",
+          }}
+        >
+          <span style={{ fontSize: "1.5rem" }}>✅</span>
+          <div>
+            <div
+              style={{
+                fontWeight: 700,
+                color: "#065F46",
+                marginBottom: "0.25rem",
+              }}
+            >
+              Application submitted!
+            </div>
+            <div style={{ fontSize: "0.875rem", color: "#047857" }}>
+              We&apos;ll verify your details and contact you on Telegram within
+              24–72 hours. Watch for a message from{" "}
+              <strong>@DealsinKampalaBot</strong>.
+            </div>
+          </div>
         </div>
       )}
 
-      {error && (
-        <div style={{ backgroundColor: "#FEE2E2", border: "1px solid #FECACA", borderRadius: 8, padding: "1rem", marginBottom: "1.5rem", color: "#991B1B" }}>
-          {error === "missing_fields" ? "Please fill all required fields" : "Something went wrong. Please try again."}
+      {/* Error banner */}
+      {error && ERROR_MESSAGES[error] && (
+        <div
+          style={{
+            backgroundColor: "#FEF2F2",
+            border: "1px solid #FECACA",
+            borderRadius: 12,
+            padding: "1rem 1.25rem",
+            marginBottom: "1.5rem",
+            color: "#991B1B",
+            fontSize: "0.875rem",
+            fontWeight: 600,
+          }}
+        >
+          ⚠️ {ERROR_MESSAGES[error]}
         </div>
       )}
 
-      <form action={submitAgent} style={{ display: "grid", gap: "1.5rem" }}>
-        <div>
-          <label htmlFor="name" style={{ fontWeight: 600, display: "block", marginBottom: "0.5rem" }}>Full Name *</label>
-          <input id="name" name="name" type="text" required placeholder="Your full name" style={{ width: "100%", padding: "0.75rem", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: "1rem", fontFamily: "inherit", boxSizing: "border-box" }} />
+      {/* Application form */}
+      <form
+        action={joinAsAgent}
+        style={{
+          backgroundColor: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: 14,
+          padding: "2rem",
+        }}
+      >
+        <h2
+          style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "1.5rem" }}
+        >
+          Your details
+        </h2>
+
+        {/* Full name */}
+        <div style={{ marginBottom: "1.25rem" }}>
+          <label style={labelStyle}>Full name *</label>
+          <input
+            type="text"
+            name="name"
+            required
+            placeholder="e.g. Brian Kato"
+            style={inputStyle}
+          />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-          <div>
-            <label htmlFor="phone" style={{ fontWeight: 600, display: "block", marginBottom: "0.5rem" }}>Primary Phone</label>
-            <input id="phone" name="phone" type="tel" placeholder="+256 700 123456" style={{ width: "100%", padding: "0.75rem", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: "1rem", fontFamily: "inherit", boxSizing: "border-box" }} />
-          </div>
-          <div>
-            <label htmlFor="altPhone" style={{ fontWeight: 600, display: "block", marginBottom: "0.5rem" }}>Alternate Phone</label>
-            <input id="altPhone" name="altPhone" type="tel" placeholder="+256 700 654321" style={{ width: "100%", padding: "0.75rem", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: "1rem", fontFamily: "inherit", boxSizing: "border-box" }} />
-          </div>
+        {/* Telegram handle */}
+        <div style={{ marginBottom: "1.25rem" }}>
+          <label style={labelStyle}>Telegram handle *</label>
+          <p
+            style={{
+              fontSize: "0.775rem",
+              color: "var(--color-muted)",
+              marginBottom: "0.375rem",
+            }}
+          >
+            We&apos;ll contact you here to verify your application.
+          </p>
+          <input
+            type="text"
+            name="telegramHandle"
+            required
+            placeholder="@yourhandle"
+            style={inputStyle}
+          />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+        {/* Area + Division */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "1rem",
+            marginBottom: "1.25rem",
+          }}
+        >
           <div>
-            <label htmlFor="area" style={{ fontWeight: 600, display: "block", marginBottom: "0.5rem" }}>Area *</label>
-            <select id="area" name="area" required style={{ width: "100%", padding: "0.75rem", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: "1rem", fontFamily: "inherit", boxSizing: "border-box" }}>
+            <label style={labelStyle}>Area *</label>
+            <select name="area" required style={{ ...inputStyle, cursor: "pointer" }}>
               <option value="">Select area</option>
-              {AREAS.map((a) => (<option key={a} value={a}>{a}</option>))}
+              {AREAS.map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
             </select>
           </div>
           <div>
-            <label htmlFor="division" style={{ fontWeight: 600, display: "block", marginBottom: "0.5rem" }}>Division *</label>
-            <select id="division" name="division" required style={{ width: "100%", padding: "0.75rem", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: "1rem", fontFamily: "inherit", boxSizing: "border-box" }}>
+            <label style={labelStyle}>Division *</label>
+            <select name="division" required style={{ ...inputStyle, cursor: "pointer" }}>
               <option value="">Select division</option>
-              {DIVISIONS.map((d) => (<option key={d} value={d}>{d}</option>))}
+              {DIVISIONS.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
             </select>
           </div>
         </div>
 
-        <div>
-          <label htmlFor="landmark" style={{ fontWeight: 600, display: "block", marginBottom: "0.5rem" }}>Landmark *</label>
-          <input id="landmark" name="landmark" type="text" required placeholder="Near Nakawa Market" style={{ width: "100%", padding: "0.75rem", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: "1rem", fontFamily: "inherit", boxSizing: "border-box" }} />
+        {/* Landmark */}
+        <div style={{ marginBottom: "1.25rem" }}>
+          <label style={labelStyle}>Landmark / meeting point *</label>
+          <p
+            style={{
+              fontSize: "0.775rem",
+              color: "var(--color-muted)",
+              marginBottom: "0.375rem",
+            }}
+          >
+            Where buyers and sellers can find you easily.
+          </p>
+          <input
+            type="text"
+            name="landmark"
+            required
+            placeholder="e.g. Near Nakawa Market, opposite Total petrol station"
+            style={inputStyle}
+          />
         </div>
 
-        <div>
-          <label htmlFor="telegramHandle" style={{ fontWeight: 600, display: "block", marginBottom: "0.5rem" }}>Telegram Handle *</label>
-          <input id="telegramHandle" name="telegramHandle" type="text" required placeholder="@yourhandle" style={{ width: "100%", padding: "0.75rem", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: "1rem", fontFamily: "inherit", boxSizing: "border-box" }} />
+        {/* Mobile money (at least one required) */}
+        <div style={{ marginBottom: "1.25rem" }}>
+          <label
+            style={{ ...labelStyle, marginBottom: "0.25rem", fontSize: "0.9rem" }}
+          >
+            Mobile money numbers
+          </label>
+          <p
+            style={{
+              fontSize: "0.775rem",
+              color: "var(--color-muted)",
+              marginBottom: "0.75rem",
+            }}
+          >
+            At least one is required — this is how you&apos;ll hold escrow.
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "1rem",
+            }}
+          >
+            <div>
+              <label style={labelStyle}>MTN MoMo number</label>
+              <input
+                type="tel"
+                name="mtnNumber"
+                placeholder="e.g. 0772123456"
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Airtel Money number</label>
+              <input
+                type="tel"
+                name="airtelNumber"
+                placeholder="e.g. 0752123456"
+                style={inputStyle}
+              />
+            </div>
+          </div>
         </div>
 
-        <button type="submit" style={{ padding: "0.75rem", backgroundColor: "#10B981", color: "white", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer", marginTop: "1rem", fontSize: "1rem" }}>
-          Submit Application
+        {/* Optional phone numbers */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "1rem",
+            marginBottom: "1.5rem",
+          }}
+        >
+          <div>
+            <label style={labelStyle}>Primary phone (optional)</label>
+            <input
+              type="tel"
+              name="phone"
+              placeholder="+256 700 123456"
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Alternate phone (optional)</label>
+            <input
+              type="tel"
+              name="altPhone"
+              placeholder="+256 700 654321"
+              style={inputStyle}
+            />
+          </div>
+        </div>
+
+        {/* Terms note */}
+        <p
+          style={{
+            fontSize: "0.775rem",
+            color: "var(--color-muted)",
+            lineHeight: 1.6,
+            marginBottom: "1.25rem",
+            padding: "0.875rem",
+            backgroundColor: "#FFFBEB",
+            borderRadius: 8,
+            border: "1px solid #FDE68A",
+          }}
+        >
+          By applying you confirm you are a resident of Kampala or Greater Kampala
+          and have a valid mobile money account. Applications are reviewed manually
+          before approval.
+        </p>
+
+        {/* Submit */}
+        <button
+          type="submit"
+          style={{
+            width: "100%",
+            backgroundColor: "var(--color-green-primary)",
+            color: "#fff",
+            border: "none",
+            padding: "0.875rem 1.5rem",
+            borderRadius: 8,
+            fontSize: "1rem",
+            fontWeight: 700,
+            cursor: "pointer",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          Submit application →
         </button>
-
-        <p style={{ fontSize: "0.85rem", color: "var(--color-muted)", textAlign: "center" }}>Verified within 24 hours</p>
       </form>
+
+      {/* Back link */}
+      <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
+        <Link
+          href="/agents"
+          style={{
+            color: "var(--color-muted)",
+            textDecoration: "none",
+            fontSize: "0.875rem",
+          }}
+        >
+          ← Browse verified agents
+        </Link>
+      </div>
     </div>
   );
 }
